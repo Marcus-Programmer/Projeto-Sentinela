@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  gateway:
+    build: ./gateway-api
+    ports:
+      - "8080:80"
+    depends_on:
+      analisador:
+        condition: service_healthy
+      encaminhador:
+        condition: service_healthy
+    networks:
+      - sistema_distribuido_net
+
+  analisador:
+    build: ./agente-analisador
+    ports:
+      - "8000:8000"
+    networks:
+      - sistema_distribuido_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  encaminhador:
+    build: ./agente-encaminhador
+    ports:
+      - "8001:8001"
+    networks:
+      - sistema_distribuido_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  sistema_distribuido_net:
+    driver: bridge
