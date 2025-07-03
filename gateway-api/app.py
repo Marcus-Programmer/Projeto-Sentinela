@@ -4,7 +4,6 @@ import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
-# --- Configuração do Logging ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -15,15 +14,10 @@ class TextoParaAnalise(BaseModel):
 
 @app.post("/analisar-e-encaminhar")
 async def analisar_e_encaminhar(data: TextoParaAnalise):
-    """
-    Ponto de entrada do sistema. Recebe um texto, o envia para análise
-    e, se necessário, o encaminha para registro e anonimização.
-    """
     texto_original = data.texto
     logger.info(f"Gateway: Novo texto recebido para orquestração.")
 
     try:
-        # 1. Chamar o Agente Analisador
         logger.info("Gateway: Comunicando com o Agente Analisador...")
         url_analisador = "http://analisador:8000/analise"
         response_analisador = requests.post(url_analisador, json={"texto": texto_original})
@@ -33,7 +27,6 @@ async def analisar_e_encaminhar(data: TextoParaAnalise):
         classificacao_ia = resultado_analise.get("classificacao")
         logger.info(f"Gateway: Análise recebida com a classificação '{classificacao_ia}'.")
 
-        # 2. Se for abuso, chamar o Agente Encaminhador
         if classificacao_ia == "abuso":
             logger.info("Gateway: Comunicando com o Agente Encaminhador...")
             url_encaminhador = "http://encaminhador:8001/registrar-denuncia"
@@ -63,7 +56,4 @@ async def analisar_e_encaminhar(data: TextoParaAnalise):
 
 @app.get("/")
 def health_check():
-    """
-    Endpoint de verificação de saúde para o Docker.
-    """
     return {"status": "Gateway API está online"}
